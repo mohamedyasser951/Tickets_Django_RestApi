@@ -10,8 +10,7 @@ class Guest(models.Model):
         return self.name
 class Movie(models.Model):
     hall = models.CharField(max_length=50)
-    name = models.CharField(max_length=50)
-    date = models.DateField()
+    movie_name = models.CharField(max_length=50)
 
     def __str__(self):
         return self.name

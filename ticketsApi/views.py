@@ -1,14 +1,12 @@
-from django.shortcuts import render
 from django.http import JsonResponse
 from .models import Guest,Movie,Reservations
 from .seializers import GuestSeralizer,MovieSerializer,ReservationSerializer
 from rest_framework .decorators import api_view
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status,filters
 from rest_framework.views import APIView
 from django.http import Http404
-from rest_framework import mixins,generics
-# Create your views here.
+from rest_framework import mixins,generics,viewsets
 
 
 def no_model_no__rest(request):
@@ -141,3 +139,45 @@ class Generics_list(generics.ListCreateAPIView):
 class Generics_pk(generics.RetrieveUpdateDestroyAPIView):
     queryset = Guest.objects.all()
     serializer_class = GuestSeralizer
+
+
+class viewset_guest(viewsets.ModelViewSet):
+    queryset = Guest.objects.all()
+    serializer_class = GuestSeralizer
+
+class viewset_movie(viewsets.ModelViewSet):
+    queryset = Movie.objects.all()
+    serializer_class = MovieSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields=["movie_name"]
+
+class viewset_reservation(viewsets.ModelViewSet):
+    queryset = Reservations.objects.all()
+    serializer_class = ReservationSerializer
+
+@api_view(["GET"])
+def search_movie(request):
+    movies = Movie.objects.filter(
+        movie_name =request.data["movie_name"],
+        hall=request.data["hall"]
+    )
+    seralizer = MovieSerializer(movies,many =True)
+    return Response(seralizer.data)
+
+@api_view(["POST"])
+def new_reservation(request):
+    movie = Movie.objects.get(
+        hall = request.data["hall"],
+        movie_name = request.data["movie_name"]
+    )
+    guest = Guest()
+    guest.name = request.data["name"]
+    guest.phone = request.data["phone"]
+    guest.save()
+    
+    reservation = Reservations()
+    reservation.guest = guest
+    reservation.movie =movie
+    reservation.save()
+
+    return Response(status=status.HTTP_201_CREATED)
